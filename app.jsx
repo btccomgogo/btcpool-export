@@ -557,7 +557,7 @@ class PoolAPI {
             }
             accoutDataList = result.data
         }else{
-            var result = await PoolAPI.get(endpoint, 'account/sub-account/morelist');
+            var result = await PoolAPI.get(endpoint, 'account/sub-account/morelist?is_guardian=1');
             if (typeof(result) != 'object') {
             throw "获取子账户列表失败，结果不是对象：" + JSON.stringify(result);
             }
