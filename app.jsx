@@ -519,7 +519,6 @@ class PoolAPI {
             params = {};
         }
         params.access_key = PoolAPI.ak();
-        console.log(params.access_key)
         return $.get(endpoint + '/' + api, params);
     }
 
