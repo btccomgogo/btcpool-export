@@ -34,6 +34,16 @@ class DataStore {
         return value;
     }
 
+    static setNetworkType(type)
+    { 
+        localStorage.setItem("btcpool.network_type",type)
+    }
+
+    static getNetworkType()
+    { 
+        return this.getValue("btcpool.network_type");
+    }
+
     static getAccessKey() {
         return this.getValue("btcpool.accesskey");
     }
@@ -81,6 +91,7 @@ class DataStore {
             localStorage.removeItem("btcpool.accesskey");
             localStorage.removeItem("btcpool.region");
             localStorage.removeItem("btcpool.watch_only");
+            localStorage.removeItem("btcpool.network_type");
         } catch (e) {
             // ignore exceptions
         }
@@ -141,11 +152,13 @@ class InputAccessKey extends React.Component {
         accessKey: '',
         hasAlert: false,
         alertText: '',
+        networkType: 'normal',
     }
     
     constructor(props) {
         super(props);
         autoBind(this);
+        DataStore.setNetworkType("normal");
     }
     
     handleAccessKeyChange(e) {
@@ -163,6 +176,11 @@ class InputAccessKey extends React.Component {
         }
     }
 
+    handleNetworkChange(e)
+    {
+        DataStore.setNetworkType(e.target.value)
+    }
+
     render() {
         return (
         <div>
@@ -170,8 +188,10 @@ class InputAccessKey extends React.Component {
             <Panel header="请输入您从BTCPool获取的币看监控密钥">
                 <HidableAlert amStyle="secondary" visible={this.state.hasAlert} alertText={this.state.alertText} />
                 <Grid>
-                    <Col sm={12} md={8}><Input type="password" placeholder="币看监控密钥或观察者链接" onChange={this.handleAccessKeyChange} /></Col>
-                    <Col sm={12} md={4}><Button onClick={this.handleClickNextStep}>下一步</Button></Col>
+                    <Col sm={16} md={4}><Input type="radio" name='network' placeholder="正式网" defaultChecked value='normal' label='正式网' onChange={this.handleNetworkChange} /></Col>
+                    <Col sm={16} md={2}><Input type="radio" name='network' placeholder="测试网" value='test' label='测试网' onChange={this.handleNetworkChange} /></Col>
+                    <Col sm={16} md={8}><Input type="password" placeholder="币看监控密钥或观察者链接" onChange={this.handleAccessKeyChange} /></Col>
+                    <Col sm={16} md={4}><Button onClick={this.handleClickNextStep}>下一步</Button></Col>
                 </Grid>
                 <p>导出工具需要获得您的授权才能导出您在BTCPool的算力数据，而给予授权最简单的方式就是提供“币看监控密钥”或“观察者链接”。</p>
                 <p>您可以<a href="https://pool.btc.com/dashboard">登录BTCPool</a>，点击右上角的“设置”按钮，然后选择“共享数据”，再点击“获取币看监控密钥”，最后，将其中的“AccessKey”粘贴到上方的输入框即可。您也可以点击“观察者”，新建一个观察者链接并将链接完整的粘贴到此处。</p>
@@ -482,6 +502,8 @@ class ExitPage extends React.Component {
 
 class PoolAPI {
     static defaultEndpoint = 'https://devpool.btc.com/v1';
+    static normalDefaultEndpoint = 'https://cn-pool.api.btc.com/v1';
+
     static endpointSuffix = '/v1';
 
     static ak() {
@@ -497,6 +519,7 @@ class PoolAPI {
             params = {};
         }
         params.access_key = PoolAPI.ak();
+        console.log(params.access_key)
         return $.get(endpoint + '/' + api, params);
     }
 
@@ -514,13 +537,38 @@ class PoolAPI {
         //     endpoints[node.default_url] = node.rest_api_endpoint;
         // }
 
-        var result = await PoolAPI.get(PoolAPI.defaultEndpoint, 'account/sub-account/list');
-        if (typeof(result) != 'object') {
+        var accoutDataList = {}
+        var endpoint = ''
+
+        if(DataStore.getNetworkType() == 'normal'){
+            endpoint = PoolAPI.normalDefaultEndpoint;
+        }else{
+            endpoint = PoolAPI.defaultEndpoint;
+        }
+
+
+
+        if(DataStore.getAccessKey().indexOf("r") == 0){
+            var result = await PoolAPI.get(endpoint, 'account/sub-account/list');
+            if (typeof(result) != 'object') {
             throw "获取子账户列表失败，结果不是对象：" + JSON.stringify(result);
-        }
-        if (result.err_no != 0) {
+            }
+            if (result.err_no != 0) {
             throw "获取子账户列表失败：" + JSON.stringify(result.err_msg);
+            }
+            accoutDataList = result.data
+        }else{
+            var result = await PoolAPI.get(endpoint, 'account/sub-account/morelist');
+            if (typeof(result) != 'object') {
+            throw "获取子账户列表失败，结果不是对象：" + JSON.stringify(result);
+            }
+            if (result.err_no != 0) {
+            throw "获取子账户列表失败：" + JSON.stringify(result.err_msg);
+            }
+            accoutDataList = result.data.display
         }
+
+        
 
         var list = {/*
             "BTC": [
@@ -536,8 +584,8 @@ class PoolAPI {
             ...
         */};
 
-        for (var i in result.data) {
-            var accountData = result.data[i];
+        for (var i in accoutDataList) {
+            var accountData = accoutDataList[i];
             // var endpoint = endpoints[accountData.default_url];
 
             // if (typeof(endpoint) != 'string' || endpoint.length == 0) {
