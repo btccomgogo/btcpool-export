@@ -603,7 +603,7 @@ class PoolAPI {
             var account = {
                 puid: accountData.puid,
                 name: accountData.name,
-                endpoint: accountData.default_url+"/v1",
+                endpoint: "https://"+accountData.default_url+"/v1",
                 region_name: accountData.region_name,
             };
 
