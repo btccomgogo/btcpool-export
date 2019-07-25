@@ -598,14 +598,21 @@ class PoolAPI {
             //     }
             // }
    
-
-            var account = {
-                puid: accountData.puid,
-                name: accountData.name,
-                endpoint: "https://"+accountData.default_url+"/v1",
-                region_name: accountData.region_name,
-            };
-
+            if(accountData.default_url.indexOf("https://") == -1){
+                var account = {
+                    puid: accountData.puid,
+                    name: accountData.name,
+                    endpoint: "https://"+accountData.default_url+"/v1",
+                    region_name: accountData.region_name,
+                };
+            }else{
+                var account = {
+                    puid: accountData.puid,
+                    name: accountData.name,
+                    endpoint: accountData.default_url+"/v1",
+                    region_name: accountData.region_name,
+                };
+            }
             if (list[accountData.coin_type] == undefined) {
                 list[accountData.coin_type] = [];
             }
