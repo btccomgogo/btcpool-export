@@ -135,7 +135,7 @@ function MainNavBar(props) {
     }
 
     return (
-        <Topbar brand="BTCPool测试网算力导出工具" toggleNavKey="nav">
+        <Topbar brand="BTCPool算力导出工具" toggleNavKey="nav">
             <CollapsibleNav eventKey="nav">
             <Nav topbar>
                 <NavItem active={props.active=="SwitchUser"} onClick={(props)=>handleSwitchUser(props)} href="#">切换用户</NavItem>
